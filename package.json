@@ -1,0 +1,29 @@
+{
+  "name": "react-universal-dynamic-ui",
+  "version": "1.0.0",
+  "description": "Universal UI Kit (Banners, Categories, Cards) for React Native and React Web",
+  "main": "index.js",
+  "react-native": "index.native.js",
+  "files": [
+    "index.js",
+    "index.native.js",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "pinar": ">=0.12.2",
+    "react-native-linear-gradient": ">=2.0.0",
+    "react-native-shimmer-placeholder": ">=2.0.0"
+  },
+  "license": "MIT",
+  "author": "Sushil Kumar Soni",
+  "keywords": [
+    "react",
+    "react-native",
+    "ui-kit",
+    "banner",
+    "card",
+    "universal"
+  ]
+}
