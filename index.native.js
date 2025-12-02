@@ -583,4 +583,206 @@ const saleStyles = StyleSheet.create({
   },
 });
 
-export { BannerComponent, CategoryComponent, SaleCard };
+// --- 5. Product Card Component (New) ---
+const ProductCard = ({
+  image,
+  brand,
+  title,
+  price,
+  originalPrice,
+  discount,
+  onPress,
+  onHeartPress,
+  currencySymbol = "₹",
+}) => {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={onPress}
+      style={prodStyles.card}
+    >
+      {/* Image Section */}
+      <View style={prodStyles.imageContainer}>
+        <ImageLoader source={{ uri: image }} style={prodStyles.image} />
+
+        {/* Discount Badge (Top Left) */}
+        {discount && (
+          <View style={prodStyles.badge}>
+            <Text style={prodStyles.badgeText}>{discount}</Text>
+          </View>
+        )}
+
+        {/* Heart/Wishlist Button (Top Right) */}
+        <TouchableOpacity
+          style={prodStyles.heartBtn}
+          onPress={onHeartPress}
+          activeOpacity={0.7}
+        >
+          {/* Simple Heart Icon using Text to avoid external icon libs */}
+          <Text style={prodStyles.heartIcon}>♡</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Details Section */}
+      <View style={prodStyles.details}>
+        {brand && <Text style={prodStyles.brand}>{brand}</Text>}
+        <Text style={prodStyles.title} numberOfLines={1}>
+          {title}
+        </Text>
+
+        <View style={prodStyles.priceRow}>
+          <Text style={prodStyles.price}>
+            {currencySymbol}
+            {price}
+          </Text>
+          {originalPrice && (
+            <Text style={prodStyles.originalPrice}>
+              {currencySymbol}
+              {originalPrice}
+            </Text>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const prodStyles = StyleSheet.create({
+  card: {
+    width: width / 2 - 24, // Fits 2 columns nicely
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    margin: 8,
+    overflow: "hidden",
+    elevation: 2, // Android Shadow
+    shadowColor: "#000", // iOS Shadow
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  imageContainer: {
+    height: 200, // Tall portrait image
+    width: "100%",
+    position: "relative",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  badge: {
+    position: "absolute",
+    top: 12,
+    left: 0,
+    backgroundColor: "#FF5252",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderBottomRightRadius: 4,
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  heartBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#fff",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  heartIcon: {
+    fontSize: 18,
+    color: "#333",
+    marginTop: 2, // optical adjustment
+  },
+  details: {
+    padding: 10,
+  },
+  brand: {
+    fontSize: 12,
+    color: "#888",
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 4,
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: "#aaa",
+    textDecorationLine: "line-through",
+  },
+});
+// --- 6. Generic Button Component (Reusable) ---
+const ButtonComponent = ({
+  text = "Button",
+  onPress,
+  backgroundColor = "#FF6B6B",
+  textColor = "#FFF",
+  style,
+  textStyle,
+}) => {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      style={[btnStyles.btn, { backgroundColor }, style]}
+    >
+      <Text style={[btnStyles.text, { color: textColor }, textStyle]}>
+        {text}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+const btnStyles = StyleSheet.create({
+  btn: {
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    marginVertical: 10,
+  },
+  text: {
+    fontSize: 18,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+});
+
+// EXPORTS
+export {
+  BannerComponent,
+  CategoryComponent,
+  SaleCard,
+  ProductCard,
+  ButtonComponent,
+};
