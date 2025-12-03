@@ -1,27 +1,49 @@
 import React, { useState, useEffect, useRef } from "react";
 
-// --- 1. Shared Image Loader (Web) ---
-const ImageLoader = ({ source, className, fallbackSource, alt = "Image" }) => {
-  const [loading, setLoading] = useState(true);
-  const src = source?.uri || fallbackSource;
+// ==========================================
+// 1. HELPER: ImageLoader (Web - Robust)
+// ==========================================
+const ImageLoader = ({
+  source,
+  className,
+  fallbackSource,
+  style,
+  alt = "Image",
+}) => {
+  const [error, setError] = useState(false);
+
+  const imageSrc = typeof source === "string" ? source : source?.uri;
+  const finalSrc = !error && imageSrc ? imageSrc : fallbackSource;
+
+  if (!finalSrc || error) {
+    return (
+      <div
+        className={`bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-medium ${className}`}
+        style={style}
+      >
+        <span>No Image</span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`relative overflow-hidden bg-gray-200 ${className}`}>
+    <div
+      className={`relative overflow-hidden bg-gray-50 ${className}`}
+      style={style}
+    >
       <img
-        src={src}
+        src={finalSrc}
         alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
-          loading ? "opacity-0" : "opacity-100"
-        }`}
-        onLoad={() => setLoading(false)}
+        className="w-full h-full object-cover block"
+        onError={() => setError(true)}
       />
-      {loading && (
-        <div className="absolute inset-0 bg-gray-300 animate-pulse" />
-      )}
     </div>
   );
 };
 
-// --- 2. Banner Component (Web) ---
+// ==========================================
+// 2. COMPONENT: BannerComponent (Web)
+// ==========================================
 const BannerComponent = ({
   bannerData = [],
   autoplay = true,
@@ -47,8 +69,8 @@ const BannerComponent = ({
   if (!bannerData.length) return null;
 
   return (
-    <div className="w-full relative group my-4">
-      <div className="relative w-full overflow-hidden rounded-xl bg-gray-100 h-64 sm:h-72 md:h-80 lg:h-96">
+    <div className="w-full relative group my-4 select-none">
+      <div className="relative w-full overflow-hidden rounded-xl bg-gray-100 shadow-sm h-64 sm:h-72 md:h-80 lg:h-96">
         <div
           className="flex h-full w-full transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
@@ -59,10 +81,10 @@ const BannerComponent = ({
               className="w-full flex-none h-full relative cursor-pointer"
               onClick={() => onBannerPress && onBannerPress(item)}
             >
-              <ImageLoader
-                source={{ uri: item.image }}
-                className="w-full h-full"
-              />
+              {/* Added rounded-xl overflow-hidden here to ensure border radius on image */}
+              <div className="w-full h-full rounded-xl overflow-hidden">
+                <ImageLoader source={item.image} className="w-full h-full" />
+              </div>
             </div>
           ))}
         </div>
@@ -72,7 +94,7 @@ const BannerComponent = ({
               <button
                 key={i}
                 onClick={() => setIndex(i)}
-                className="pointer-events-auto rounded-full transition-all duration-300 h-2 shadow-sm"
+                className="pointer-events-auto rounded-full transition-all duration-300 h-2 shadow-sm border border-white/20"
                 style={{
                   width: index === i ? "24px" : "8px",
                   backgroundColor: index === i ? activeDotColor : dotColor,
@@ -86,7 +108,9 @@ const BannerComponent = ({
   );
 };
 
-// --- 3. Category Component (Web) ---
+// ==========================================
+// 3. COMPONENT: CategoryComponent (Web)
+// ==========================================
 const CategoryComponent = ({
   categoriesData = [],
   layout = "horizontal",
@@ -98,7 +122,7 @@ const CategoryComponent = ({
 }) => {
   const Item = ({ item, children, className }) => (
     <div
-      className={`cursor-pointer transition-transform hover:scale-105 ${className}`}
+      className={`cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 ${className}`}
       onClick={() => onCategoryPress && onCategoryPress(item)}
     >
       {children}
@@ -111,21 +135,23 @@ const CategoryComponent = ({
       return (
         <Item item={item} className="flex flex-col items-center mr-4 shrink-0">
           <div
-            className="rounded-full overflow-hidden shadow-md bg-white border border-gray-100"
+            className="rounded-full overflow-hidden shadow-md bg-white border-2 border-white"
             style={{ width: circleSize, height: circleSize }}
           >
             <ImageLoader
-              source={{ uri: item.image }}
-              className="w-full h-full"
+              source={item.image}
+              className="w-full h-full hover:opacity-90"
             />
           </div>
           {showTitle && (
-            <span className="mt-2 text-xs text-center font-medium text-gray-700 truncate w-20">
+            <span className="mt-2 text-xs text-center font-semibold text-gray-700 truncate w-20">
               {item.name}
             </span>
           )}
           {showCount && (
-            <span className="text-[10px] text-gray-500">{item.count}</span>
+            <span className="text-[10px] text-gray-500 font-medium">
+              {item.count}
+            </span>
           )}
         </Item>
       );
@@ -135,23 +161,20 @@ const CategoryComponent = ({
       return (
         <Item
           item={item}
-          className="flex flex-row items-center p-3 mb-3 bg-white rounded-xl shadow-sm border border-gray-100"
+          className="flex flex-row items-center p-3 mb-3 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md"
         >
-          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 shrink-0">
-            <ImageLoader
-              source={{ uri: item.image }}
-              className="w-full h-full"
-            />
+          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-50 shrink-0 border border-gray-100">
+            <ImageLoader source={item.image} className="w-full h-full" />
           </div>
           <div className="ml-4 flex flex-col">
-            <span className="font-bold text-gray-800">{item.name}</span>
+            <span className="font-bold text-gray-800 text-sm">{item.name}</span>
             {item.description && (
-              <span className="text-xs text-gray-500 mt-1 line-clamp-2">
+              <span className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
                 {item.description}
               </span>
             )}
             {showCount && (
-              <span className="text-xs text-gray-400 mt-1">
+              <span className="text-[10px] text-gray-400 mt-1 font-medium bg-gray-50 px-2 py-0.5 rounded-full w-fit">
                 {item.count} items
               </span>
             )}
@@ -161,17 +184,23 @@ const CategoryComponent = ({
     }
     // Horizontal / Grid
     return (
-      <Item item={item} className="flex flex-col items-center mr-4 shrink-0">
-        <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm bg-white border border-gray-100">
-          <ImageLoader source={{ uri: item.image }} className="w-full h-full" />
+      <Item
+        item={item}
+        className="flex flex-col items-center justify-start h-full"
+      >
+        <div className="w-full aspect-square rounded-xl overflow-hidden shadow-sm bg-gray-100 border border-gray-200 flex items-center justify-center p-2">
+          <ImageLoader
+            source={item.image}
+            className="w-full h-full !object-contain mix-blend-multiply"
+          />
         </div>
         {showTitle && (
-          <span className="mt-2 text-xs text-center font-medium text-gray-800 line-clamp-2 w-24">
+          <span className="mt-2 text-[13px] text-center font-bold text-gray-800 line-clamp-2 w-full leading-tight">
             {item.name}
           </span>
         )}
         {showCount && (
-          <span className="text-[10px] text-gray-500">{item.count}</span>
+          <span className="text-[10px] text-gray-500 mt-0.5">{item.count}</span>
         )}
       </Item>
     );
@@ -179,31 +208,35 @@ const CategoryComponent = ({
 
   if (layout === "grid") {
     return (
-      <div
-        className="grid gap-4 w-full p-4"
-        style={{ gridTemplateColumns: `repeat(${numColumns}, minmax(0, 1fr))` }}
-      >
-        {categoriesData.map((item, i) => (
-          <div key={i} className="flex justify-center">
-            {renderContent(item)}
-          </div>
-        ))}
+      <div className="w-full p-2">
+        {/* Grid layout with gap-2 to match mobile look */}
+        <div
+          className="grid gap-2"
+          style={{
+            gridTemplateColumns: `repeat(${numColumns}, minmax(0, 1fr))`,
+          }}
+        >
+          {categoriesData.map((item, i) => (
+            <div key={i} className="flex justify-center">
+              {renderContent(item)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
   if (layout === "vertical") {
     return (
-      <div className="flex flex-col w-full p-4">
+      <div className="flex flex-col w-full p-4 space-y-2">
         {categoriesData.map((item, i) => (
           <div key={i}>{renderContent(item)}</div>
         ))}
       </div>
     );
   }
-  // Horizontal Scroll
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide py-4 px-4">
-      <div className="flex">
+    <div className="w-full overflow-x-auto scrollbar-hide py-4 px-2">
+      <div className="flex pl-2">
         {categoriesData.map((item, i) => (
           <div key={i}>{renderContent(item)}</div>
         ))}
@@ -212,7 +245,9 @@ const CategoryComponent = ({
   );
 };
 
-// --- 4. Sale Card Component (Web) ---
+// ==========================================
+// 4. COMPONENT: SaleCard (Web)
+// ==========================================
 const SaleCard = ({
   brand,
   category,
@@ -221,6 +256,7 @@ const SaleCard = ({
   image,
   badge,
   primaryButton,
+  secondaryButton,
   showTimer = false,
   endTime,
   timerLabel = "Ends in",
@@ -230,9 +266,10 @@ const SaleCard = ({
   theme = "light",
   minimalMode = false,
   imageOnly = false,
+  imageStyle,
 }) => {
   const isDark = theme === "dark";
-  const [timeLeft, setTimeLeft] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(null);
 
   useEffect(() => {
     if (!showTimer || !endTime) return;
@@ -240,34 +277,56 @@ const SaleCard = ({
       const diff = new Date(endTime) - new Date();
       if (diff < 0) return { ended: true };
       return {
-        d: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        h: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        m: Math.floor((diff / 1000 / 60) % 60),
-        s: Math.floor((diff / 1000) % 60),
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+        ended: false,
       };
     };
-    const timer = setInterval(() => setTimeLeft(tick()), 1000);
+    setTimeRemaining(tick());
+    const timer = setInterval(() => setTimeRemaining(tick()), 1000);
     return () => clearInterval(timer);
   }, [endTime]);
 
   const RenderTimer = () => {
-    if (!showTimer || !timeLeft) return null;
-    if (timeLeft.ended)
+    if (!showTimer || !timeRemaining) return null;
+    if (timeRemaining.ended)
       return (
-        <div className="bg-gray-400 text-white text-xs px-2 py-1 rounded mt-2 inline-block">
-          Ended
+        <div className="bg-gray-400 text-white text-xs px-3 py-1 rounded-full mt-2 inline-block font-bold">
+          SALE ENDED
         </div>
       );
+
+    const TimeBox = ({ val, label }) => (
+      <div className="flex flex-col items-center bg-white rounded-md shadow-sm min-w-[36px] py-1.5 px-1 border border-gray-100">
+        <span className="text-[#FF6B6B] font-bold text-lg leading-none">
+          {String(val).padStart(2, "0")}
+        </span>
+        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
+          {label}
+        </span>
+      </div>
+    );
+    const Separator = () => (
+      <span className="text-[#FF6B6B] font-bold text-xl pt-1">:</span>
+    );
+
     return (
-      <div className="bg-yellow-50 p-2 rounded-lg mt-2 flex items-center gap-2 border border-yellow-100 animate-pulse">
-        <span className="text-[10px] uppercase font-bold text-yellow-700">
+      <div className="bg-[#FFF3CD] p-3 rounded-xl mt-3 flex flex-col items-center border border-yellow-100 w-full shadow-sm">
+        <span className="text-[10px] uppercase font-bold text-[#856404] mb-2 tracking-[0.15em]">
           {timerLabel}
         </span>
-        <div className="flex gap-1 text-red-500 font-mono font-bold text-sm">
-          {timeLeft.d > 0 && <span>{timeLeft.d}d</span>}
-          <span>{timeLeft.h}h</span>
-          <span>{timeLeft.m}m</span>
-          <span>{timeLeft.s}s</span>
+        <div className="flex items-start gap-1.5">
+          {timeRemaining.d > 0 && (
+            <>
+              <TimeBox val={timeRemaining.d} label="D" />
+              <Separator />
+            </>
+          )}
+          <TimeBox val={timeRemaining.h} label="H" /> <Separator />
+          <TimeBox val={timeRemaining.m} label="M" /> <Separator />
+          <TimeBox val={timeRemaining.s} label="S" />
         </div>
       </div>
     );
@@ -290,15 +349,18 @@ const SaleCard = ({
         </h3>
       )}
       {discount && (
-        <span className="bg-teal-400 text-white text-xs font-bold px-2 py-1 rounded-full self-start mb-2">
+        <span className="bg-[#4ECDC4] text-white text-xs font-bold px-3 py-1 rounded-full self-start mb-3 shadow-sm">
           {discount}
         </span>
       )}
       <RenderTimer />
       {primaryButton && (
         <button
-          onClick={primaryButton.onPress}
-          className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            primaryButton.onPress && primaryButton.onPress();
+          }}
+          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-md active:scale-95 transform duration-100"
         >
           {primaryButton.text}
         </button>
@@ -309,16 +371,19 @@ const SaleCard = ({
   return (
     <div
       onClick={onPress}
-      className={`group relative overflow-hidden rounded-xl shadow-sm border border-gray-100 cursor-pointer transition-all hover:shadow-md my-2
+      className={`group relative overflow-hidden rounded-2xl shadow-sm border border-gray-100 cursor-pointer transition-all duration-300 hover:shadow-md my-2
         ${horizontal ? "flex flex-row" : "flex flex-col"} 
         ${isDark ? "bg-gray-900 border-gray-800" : "bg-white"}`}
     >
       {!minimalMode && imagePosition === "top" && (
         <div
-          className={`${horizontal ? "w-2/5" : "w-full"} h-48 overflow-hidden`}
+          className={`${
+            horizontal ? "w-2/5" : "w-full"
+          } overflow-hidden relative`}
+          style={{ height: imageStyle?.height || "192px", ...imageStyle }}
         >
           <ImageLoader
-            source={{ uri: image }}
+            source={image}
             className="w-full h-full group-hover:scale-105 transition-transform duration-500"
           />
         </div>
@@ -333,7 +398,8 @@ const SaleCard = ({
   );
 };
 
-// --- 5. Product Card Component (Web) ---
+// --- 5. Product Card Component (Web - Fixed) ---
+// --- 5. Product Card Component (Web - Fixed for Mobile) ---
 const ProductCard = ({
   image,
   brand,
@@ -344,27 +410,36 @@ const ProductCard = ({
   onPress,
   onHeartPress,
   currencySymbol = "₹",
+  imageStyle, // This allows the user to overwrite height/objectFit
 }) => {
   return (
     <div
       onClick={onPress}
-      className="group relative bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-all hover:shadow-md w-full max-w-[200px]"
+      className="group relative bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-all hover:shadow-md w-full mb-3"
     >
-      {/* Image Section */}
-      <div className="relative h-64 w-full overflow-hidden">
+      {/* FIX APPLIED HERE:
+         1. Removed style={{ height: '256px' }}
+         2. Added Tailwind classes: 'h-48 sm:h-64' 
+            - h-48 means 192px height on mobile (looks much better)
+            - sm:h-64 means 256px height on tablet/desktop
+      */}
+      <div
+        className="relative w-full overflow-hidden h-48 sm:h-64"
+        style={imageStyle}
+      >
         <ImageLoader
           source={image}
           className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+          // Default to cover so it fills the box, user can overwrite via imageStyle prop
+          style={{ objectFit: imageStyle?.objectFit || "cover" }}
         />
 
-        {/* Discount Badge */}
         {discount && (
           <div className="absolute top-0 left-0 bg-[#FF5252] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg z-10">
             {discount}
           </div>
         )}
 
-        {/* Heart Button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -420,7 +495,7 @@ const ProductCard = ({
   );
 };
 
-// --- 6. Generic Button Component (Reusable) ---
+// --- 6. Generic Button Component (Web) ---
 const ButtonComponent = ({
   text = "Button",
   onPress,
@@ -438,10 +513,128 @@ const ButtonComponent = ({
   );
 };
 
+// ==========================================
+// 7. COMPONENT: GridContainer (The new Container)
+// ==========================================
+const GridContainer = ({
+  children,
+  data = [],
+  renderItem,
+  keyExtractor,
+  className = "", // For overwriting the outer container styles
+  itemClassName = "", // For overwriting the specific column width styles
+  style = {},
+  emptyComponent, // Render this if data is empty
+}) => {
+  // 1. Default Tailwind classes (matching your specific grid)
+  const defaultContainerClass = "flex flex-wrap -mx-2 px-2";
+
+  // 2. Default Item classes (Responsive widths)
+  // Added 'mb-4' because usually rows need spacing at the bottom
+  const defaultItemClass = "w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/4 px-2 mb-4";
+
+  // 3. Merging logic: User props will override defaults if there are conflicts,
+  // or simply append if they are additive.
+  const finalContainerClass = `${defaultContainerClass} ${className}`;
+  const finalItemClass = `${defaultItemClass} ${itemClassName}`;
+
+  // 4. If no data is provided, but children exist, render children (manual mode)
+  if (!data || data.length === 0) {
+    return (
+      <div className={finalContainerClass} style={style}>
+        {children || emptyComponent}
+      </div>
+    );
+  }
+
+  // 5. Data-Driven Mode (The "TL" preferred way)
+  return (
+    <div className={finalContainerClass} style={style}>
+      {data.map((item, index) => {
+        const key = keyExtractor ? keyExtractor(item) : index;
+        return (
+          <div key={key} className={finalItemClass}>
+            {renderItem({ item, index })}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ==========================================
+// 8. COMPONENT: Heading (Reusable Title)
+// ==========================================
+const Heading = ({
+  title,
+  subtitle,
+  align = "left", // 'left', 'center', 'right'
+  size = "lg", // 'sm', 'md', 'lg', 'xl'
+  className = "",
+  subtitleClassName = "",
+  style = {},
+}) => {
+  // 1. alignment Map
+  const alignmentClass =
+    {
+      left: "text-left items-start",
+      center: "text-center items-center",
+      right: "text-right items-end",
+    }[align] || "text-left items-start";
+
+  // 2. Size Map (Standardizing your font sizes)
+  const sizeClass =
+    {
+      sm: "text-base",
+      md: "text-lg",
+      lg: "text-xl md:text-2xl", // Responsive: bigger on desktop
+      xl: "text-2xl md:text-3xl",
+    }[size] || "text-xl";
+
+  return (
+    <div
+      className={`flex flex-col mb-4 ${alignmentClass} ${className}`}
+      style={style}
+    >
+      <h2 className={`font-bold text-gray-900 leading-tight ${sizeClass}`}>
+        {title}
+      </h2>
+
+      {subtitle && (
+        <p
+          className={`text-sm text-gray-500 mt-1 font-medium ${subtitleClassName}`}
+        >
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// 9. COMPONENT: Section (Layout Wrapper)
+// ==========================================
+const Section = ({
+  children,
+  className = "",
+  style = {},
+  padding = "p-4", // Default padding, can be overwritten
+  margin = "mb-6", // Default bottom margin for separation
+}) => {
+  return (
+    <div className={`${padding} ${margin} ${className}`} style={style}>
+      {children}
+    </div>
+  );
+};
+
 export {
   BannerComponent,
   CategoryComponent,
   SaleCard,
   ProductCard,
   ButtonComponent,
+  GridContainer,
+  Heading,
+  Section,
 };

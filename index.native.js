@@ -7,7 +7,7 @@ import {
   Dimensions,
   Image,
   ScrollView,
-  Animated,
+  FlatList,
 } from "react-native";
 import Carousel from "pinar";
 import ShimmerPlaceholder from "react-native-shimmer-placeholder";
@@ -15,7 +15,9 @@ import LinearGradient from "react-native-linear-gradient";
 
 const { width, height } = Dimensions.get("window");
 
-// --- 1. Shared Image Loader ---
+/* ============================================================================
+      1. IMAGE LOADER (Native Equivalent of Web ImageLoader)
+      ============================================================================ */
 const ImageLoader = ({
   source,
   style,
@@ -26,11 +28,9 @@ const ImageLoader = ({
   const finalSource = source?.uri ? source : fallbackSource;
 
   return (
-    // FIX: style is applied to View to ensure borderRadius + overflow works
     <View style={[style, { overflow: "hidden" }]}>
       <Image
         source={finalSource}
-        // FIX: Image fills the container perfectly
         style={[
           StyleSheet.absoluteFill,
           { width: undefined, height: undefined },
@@ -39,6 +39,7 @@ const ImageLoader = ({
         onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
       />
+
       {loading && (
         <ShimmerPlaceholder
           style={[StyleSheet.absoluteFill, style]}
@@ -49,7 +50,9 @@ const ImageLoader = ({
   );
 };
 
-// --- 2. Banner Component ---
+/* ============================================================================
+      2. BANNER COMPONENT (Native Equivalent)
+      ============================================================================ */
 const BannerComponent = ({
   bannerData = [],
   autoplay = true,
@@ -60,6 +63,7 @@ const BannerComponent = ({
   onBannerPress,
 }) => {
   if (!bannerData.length) return null;
+
   return (
     <View style={stylesBanner.wrapper}>
       <Carousel
@@ -78,12 +82,12 @@ const BannerComponent = ({
             : { display: "none" }
         }
       >
-        {bannerData.map((item, index) => (
+        {bannerData.map((item, i) => (
           <TouchableOpacity
-            key={index}
+            key={i}
             activeOpacity={0.9}
+            style={stylesBanner.slide}
             onPress={() => onBannerPress && onBannerPress(item)}
-            style={stylesBanner.slide} // Center content
           >
             <ImageLoader
               style={stylesBanner.image}
@@ -97,32 +101,20 @@ const BannerComponent = ({
 };
 
 const stylesBanner = StyleSheet.create({
-  wrapper: { height: height * 0.25, marginVertical: 10 },
-  slide: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center", // Ensures image is centered
-  },
+  wrapper: { height: height * 0.25, marginVertical: 12 },
+  slide: { flex: 1, justifyContent: "center", alignItems: "center" },
   image: {
-    width: width - 32, // FIX: Subtract margin so corners are visible!
+    width: width - 32,
     height: height * 0.25,
-    borderRadius: 12, // Rounded corners
-    alignSelf: "center",
+    borderRadius: 12,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    width: 24,
-    height: 8,
-    borderRadius: 4,
-  },
+  dot: { width: 8, height: 8, borderRadius: 4, marginHorizontal: 4 },
+  activeDot: { width: 24, height: 8, borderRadius: 4 },
 });
 
-// --- 3. Category Component ---
+/* ============================================================================
+      3. CATEGORY COMPONENT (Native Equivalent)
+      ============================================================================ */
 const CategoryComponent = ({
   categoriesData = [],
   layout = "horizontal",
@@ -130,198 +122,208 @@ const CategoryComponent = ({
   numColumns = 3,
   showTitle = true,
   showCount = false,
-  imageSize = 80,
   circleSize = 70,
+  imageSize = 80,
   fallbackImage,
 }) => {
-  const renderItem = (item) => {
-    // Circle
-    if (layout === "circle") {
-      return (
-        <TouchableOpacity
-          style={catStyles.circleItem}
-          onPress={() => onCategoryPress && onCategoryPress(item)}
-        >
-          <View
-            style={[
-              catStyles.circleImgWrap,
-              {
-                width: circleSize,
-                height: circleSize,
-                borderRadius: circleSize / 2,
-              },
-            ]}
-          >
-            <ImageLoader
-              style={{ width: "100%", height: "100%" }}
-              source={{ uri: item.image }}
-              fallbackSource={fallbackImage}
-            />
-          </View>
-          {showTitle && (
-            <Text numberOfLines={1} style={catStyles.circleTitle}>
-              {item.name}
-            </Text>
-          )}
-          {showCount && item.count && (
-            <Text style={catStyles.countText}>{item.count}</Text>
-          )}
-        </TouchableOpacity>
-      );
-    }
-    // Grid
-    if (layout === "grid") {
-      const itemWidth =
-        (width - 48) / numColumns - ((numColumns - 1) * 8) / numColumns;
-      return (
-        <TouchableOpacity
-          style={{ width: itemWidth, alignItems: "center", marginBottom: 8 }}
-          onPress={() => onCategoryPress && onCategoryPress(item)}
-        >
-          <View style={catStyles.gridImgWrap}>
-            <ImageLoader
-              style={{ width: "100%", height: "100%" }}
-              source={{ uri: item.image }}
-              fallbackSource={fallbackImage}
-            />
-          </View>
-          {showTitle && (
-            <Text numberOfLines={2} style={catStyles.gridTitle}>
-              {item.name}
-            </Text>
-          )}
-          {showCount && item.count && (
-            <Text style={catStyles.countText}>{item.count} items</Text>
-          )}
-        </TouchableOpacity>
-      );
-    }
-    // Vertical
-    if (layout === "vertical") {
-      return (
-        <TouchableOpacity
-          style={catStyles.vertItem}
-          onPress={() => onCategoryPress && onCategoryPress(item)}
-        >
-          <View
-            style={{
-              width: imageSize,
-              height: imageSize,
-              borderRadius: 10,
-              overflow: "hidden",
-              backgroundColor: "#ccc",
-            }}
-          >
-            <ImageLoader
-              style={{ width: "100%", height: "100%" }}
-              source={{ uri: item.image }}
-              fallbackSource={fallbackImage}
-            />
-          </View>
-          <View style={{ flex: 1, marginLeft: 12, justifyContent: "center" }}>
-            {showTitle && (
-              <Text numberOfLines={1} style={{ fontWeight: "bold" }}>
-                {item.name}
-              </Text>
-            )}
-            {item.description && (
-              <Text numberOfLines={2} style={{ fontSize: 12, marginTop: 4 }}>
-                {item.description}
-              </Text>
-            )}
-            {showCount && item.count && (
-              <Text style={{ fontSize: 11, marginTop: 4 }}>
-                {item.count} items
-              </Text>
-            )}
-          </View>
-        </TouchableOpacity>
-      );
-    }
-    // Default Horizontal
+  const renderCircle = (item) => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={catStyles.circleItem}
+      onPress={() => onCategoryPress && onCategoryPress(item)}
+    >
+      <View
+        style={[
+          catStyles.circleImgWrap,
+          {
+            width: circleSize,
+            height: circleSize,
+            borderRadius: circleSize / 2,
+          },
+        ]}
+      >
+        <ImageLoader
+          style={{ width: "100%", height: "100%" }}
+          source={{ uri: item.image }}
+        />
+      </View>
+
+      {showTitle && (
+        <Text numberOfLines={1} style={catStyles.circleTitle}>
+          {item.name}
+        </Text>
+      )}
+      {showCount && item.count && (
+        <Text style={catStyles.countText}>{item.count}</Text>
+      )}
+    </TouchableOpacity>
+  );
+
+  const renderGrid = (item) => {
+    const itemWidth =
+      (width - 48) / numColumns - ((numColumns - 1) * 8) / numColumns;
+
     return (
       <TouchableOpacity
-        style={catStyles.horizItem}
+        activeOpacity={0.8}
+        style={{ width: itemWidth, alignItems: "center", marginBottom: 12 }}
         onPress={() => onCategoryPress && onCategoryPress(item)}
       >
-        <View
-          style={{
-            width: imageSize,
-            height: imageSize,
-            borderRadius: 12,
-            overflow: "hidden",
-            backgroundColor: "#fff",
-            elevation: 3,
-          }}
-        >
+        <View style={catStyles.gridImgWrap}>
           <ImageLoader
             style={{ width: "100%", height: "100%" }}
             source={{ uri: item.image }}
-            fallbackSource={fallbackImage}
           />
         </View>
+
         {showTitle && (
-          <Text numberOfLines={2} style={catStyles.horizTitle}>
+          <Text numberOfLines={2} style={catStyles.gridTitle}>
             {item.name}
           </Text>
         )}
         {showCount && item.count && (
-          <Text style={catStyles.countText}>{item.count}</Text>
+          <Text style={catStyles.countText}>{item.count} items</Text>
         )}
       </TouchableOpacity>
     );
   };
 
-  if (layout === "horizontal" || layout === "circle") {
-    return (
-      <View style={{ paddingVertical: 12 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
-        >
-          {categoriesData.map((item, index) => (
-            <View key={index}>{renderItem(item)}</View>
-          ))}
-        </ScrollView>
+  const renderVertical = (item) => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={catStyles.vertItem}
+      onPress={() => onCategoryPress && onCategoryPress(item)}
+    >
+      <View
+        style={{
+          width: imageSize,
+          height: imageSize,
+          borderRadius: 10,
+          overflow: "hidden",
+          backgroundColor: "#ccc",
+        }}
+      >
+        <ImageLoader
+          style={{ width: "100%", height: "100%" }}
+          source={{ uri: item.image }}
+        />
       </View>
+
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        {showTitle && (
+          <Text numberOfLines={1} style={{ fontWeight: "bold" }}>
+            {item.name}
+          </Text>
+        )}
+        {item.description && (
+          <Text numberOfLines={2} style={{ fontSize: 12, marginTop: 4 }}>
+            {item.description}
+          </Text>
+        )}
+        {showCount && item.count && (
+          <Text style={{ fontSize: 11, marginTop: 4 }}>{item.count} items</Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderHorizontal = (item) => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={catStyles.horizItem}
+      onPress={() => onCategoryPress && onCategoryPress(item)}
+    >
+      <View
+        style={{
+          width: imageSize,
+          height: imageSize,
+          borderRadius: 12,
+          overflow: "hidden",
+          backgroundColor: "#fff",
+        }}
+      >
+        <ImageLoader
+          style={{ width: "100%", height: "100%" }}
+          source={{ uri: item.image }}
+        />
+      </View>
+
+      {showTitle && (
+        <Text numberOfLines={2} style={catStyles.horizTitle}>
+          {item.name}
+        </Text>
+      )}
+      {showCount && item.count && (
+        <Text style={catStyles.countText}>{item.count}</Text>
+      )}
+    </TouchableOpacity>
+  );
+
+  if (layout === "circle") {
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ padding: 12 }}
+      >
+        {categoriesData.map((item, index) => (
+          <View key={index}>{renderCircle(item)}</View>
+        ))}
+      </ScrollView>
     );
   }
+
   if (layout === "grid") {
     return (
       <View
         style={{
-          paddingHorizontal: 16,
           flexDirection: "row",
           flexWrap: "wrap",
+          paddingHorizontal: 16,
           gap: 8,
         }}
       >
         {categoriesData.map((item, index) => (
-          <View key={index}>{renderItem(item)}</View>
+          <View key={index}>{renderGrid(item)}</View>
         ))}
       </View>
     );
   }
+
+  if (layout === "vertical") {
+    return (
+      <View style={{ padding: 12 }}>
+        {categoriesData.map((item, index) => (
+          <View key={index}>{renderVertical(item)}</View>
+        ))}
+      </View>
+    );
+  }
+
   return (
-    <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ padding: 12 }}
+    >
       {categoriesData.map((item, index) => (
-        <View key={index}>{renderItem(item)}</View>
+        <View key={index}>{renderHorizontal(item)}</View>
       ))}
-    </View>
+    </ScrollView>
   );
 };
 
 const catStyles = StyleSheet.create({
   circleItem: { marginRight: 16, alignItems: "center" },
-  circleImgWrap: { elevation: 3, backgroundColor: "#ccc", overflow: "hidden" },
+  circleImgWrap: { overflow: "hidden", backgroundColor: "#ccc" },
   circleTitle: {
     marginTop: 8,
-    textAlign: "center",
     fontSize: 12,
+    textAlign: "center",
     maxWidth: 80,
   },
   countText: { fontSize: 10, textAlign: "center", color: "#666" },
+
   gridImgWrap: {
     width: "100%",
     aspectRatio: 1,
@@ -329,25 +331,29 @@ const catStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#ccc",
   },
-  gridTitle: { marginTop: 8, textAlign: "center", fontSize: 12 },
+  gridTitle: { marginTop: 8, fontSize: 12, textAlign: "center" },
+
   vertItem: {
     flexDirection: "row",
-    marginBottom: 16,
-    backgroundColor: "#FFF",
-    borderRadius: 12,
+    backgroundColor: "#fff",
     padding: 12,
-    elevation: 2,
+    marginBottom: 12,
+    borderRadius: 12,
+    elevation: 3,
   },
+
   horizItem: { marginRight: 16, alignItems: "center" },
   horizTitle: {
     marginTop: 8,
+    fontSize: 12,
     textAlign: "center",
     maxWidth: 100,
-    fontSize: 12,
   },
 });
 
-// --- 4. Sale Card Component ---
+/* ============================================================================
+      4. SALE CARD (Native Equivalent)
+      ============================================================================ */
 const SaleCard = ({
   brand,
   category,
@@ -356,7 +362,6 @@ const SaleCard = ({
   image,
   badge,
   primaryButton,
-  secondaryButton,
   showTimer = false,
   endTime,
   timerLabel = "Ends in",
@@ -370,143 +375,97 @@ const SaleCard = ({
 }) => {
   const isDark = theme === "dark";
   const [timeRemaining, setTimeRemaining] = useState(null);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!showTimer || !endTime) return;
-    const calc = () => {
-      const dist = new Date(endTime).getTime() - new Date().getTime();
-      if (dist < 0) return { ended: true };
+
+    const tick = () => {
+      const diff = new Date(endTime) - new Date();
+      if (diff <= 0) return { ended: true };
+
       return {
-        d: Math.floor(dist / 86400000),
-        h: Math.floor((dist % 86400000) / 3600000),
-        m: Math.floor((dist % 3600000) / 60000), // ✅ FIXED: Variable name correct
-        s: Math.floor((dist % 60000) / 1000),
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
         ended: false,
       };
     };
-    setTimeRemaining(calc());
-    const t = setInterval(() => setTimeRemaining(calc()), 1000);
-    return () => clearInterval(t);
-  }, [endTime]);
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
+    setTimeRemaining(tick());
+    const interval = setInterval(() => setTimeRemaining(tick()), 1000);
+    return () => clearInterval(interval);
+  }, [endTime]);
 
   const RenderTimer = () => {
     if (!showTimer || !timeRemaining) return null;
-    if (timeRemaining.ended)
+
+    if (timeRemaining.ended) {
       return (
         <View style={saleStyles.ended}>
-          <Text style={{ color: "white" }}>Ended</Text>
+          <Text style={{ color: "white" }}>SALE ENDED</Text>
         </View>
       );
+    }
+
     return (
-      <Animated.View
-        style={[saleStyles.timerWrap, { transform: [{ scale: pulseAnim }] }]}
-      >
-        <Text
-          style={{
-            fontSize: 10,
-            marginBottom: 4,
-            fontWeight: "bold",
-            color: "#856404",
-          }}
-        >
-          {timerLabel}
-        </Text>
-        <View style={{ flexDirection: "row", gap: 6 }}>
+      <View style={saleStyles.timerWrap}>
+        <Text style={saleStyles.timerLabel}>{timerLabel}</Text>
+        <View style={saleStyles.timerRow}>
           {["d", "h", "m", "s"].map((unit) => (
             <View key={unit} style={saleStyles.timerBox}>
-              <Text
-                style={{ fontWeight: "bold", color: "#FF6B6B", fontSize: 16 }}
-              >
+              <Text style={saleStyles.timerValue}>
                 {String(timeRemaining[unit]).padStart(2, "0")}
               </Text>
-              <Text
-                style={{
-                  fontSize: 9,
-                  color: "#aaa",
-                  fontWeight: "bold",
-                  marginTop: 0,
-                }}
-              >
-                {unit.toUpperCase()}
-              </Text>
+              <Text style={saleStyles.timerUnit}>{unit.toUpperCase()}</Text>
             </View>
           ))}
         </View>
-      </Animated.View>
+      </View>
     );
   };
 
   const Content = () => (
-    <View style={{ padding: 16, flex: 1 }}>
+    <View style={saleStyles.content}>
       {(category || brand) && (
-        <Text style={{ color: "#666", fontSize: 12, marginBottom: 4 }}>
+        <Text style={saleStyles.subTitle}>
           {brand} {category}
         </Text>
       )}
+
       {title && (
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "600",
-            color: isDark ? "#fff" : "#000",
-          }}
-        >
+        <Text style={[saleStyles.title, { color: isDark ? "#fff" : "#000" }]}>
           {title}
         </Text>
       )}
+
       {discount && (
         <View style={saleStyles.discount}>
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 12 }}>
-            {discount}
-          </Text>
+          <Text style={saleStyles.discountText}>{discount}</Text>
         </View>
       )}
 
       <RenderTimer />
 
-      {(primaryButton || secondaryButton) && (
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
-          {primaryButton && (
-            <TouchableOpacity
-              onPress={primaryButton.onPress}
-              style={[saleStyles.btn, { backgroundColor: "#007AFF" }]}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                {primaryButton.text}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      {primaryButton && (
+        <TouchableOpacity
+          onPress={primaryButton.onPress}
+          style={saleStyles.btnPrimary}
+        >
+          <Text style={saleStyles.btnPrimaryText}>{primaryButton.text}</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
 
   return (
     <TouchableOpacity
-      onPress={onPress}
       activeOpacity={0.9}
+      onPress={onPress}
       style={[
         saleStyles.card,
         horizontal && { flexDirection: "row" },
-        { backgroundColor: isDark ? "#1C1C1E" : "#FFF" },
+        { backgroundColor: isDark ? "#1C1C1E" : "#fff" },
       ]}
     >
       {!minimalMode && imagePosition === "top" && (
@@ -515,16 +474,16 @@ const SaleCard = ({
           style={[
             saleStyles.img,
             horizontal && { width: "40%", height: "100%" },
-            imageStyle, // ✅ Pass custom styles
+            imageStyle,
           ]}
         />
       )}
+
       {!imageOnly && <Content />}
+
       {badge && (
         <View style={saleStyles.badge}>
-          <Text style={{ color: "#fff", fontSize: 10, fontWeight: "bold" }}>
-            {badge}
-          </Text>
+          <Text style={saleStyles.badgeText}>{badge}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -537,53 +496,78 @@ const saleStyles = StyleSheet.create({
     marginVertical: 8,
     overflow: "hidden",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    backgroundColor: "#fff",
   },
   img: { width: "100%", height: 180 },
+  content: { padding: 16, flex: 1 },
+  subTitle: { color: "#666", fontSize: 12, marginBottom: 4 },
+  title: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
+
   discount: {
     backgroundColor: "#4ECDC4",
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     borderRadius: 4,
     alignSelf: "flex-start",
-    marginTop: 4,
+    marginBottom: 10,
   },
+  discountText: { color: "#fff", fontWeight: "bold", fontSize: 12 },
+
   timerWrap: {
     backgroundColor: "#FFF3CD",
     padding: 8,
     borderRadius: 8,
+    alignItems: "center",
     marginTop: 8,
-    alignItems: "center",
   },
+  timerLabel: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#856404",
+    marginBottom: 4,
+  },
+  timerRow: { flexDirection: "row", gap: 6 },
   timerBox: {
-    backgroundColor: "#FFF",
-    padding: 4,
+    backgroundColor: "#fff",
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderRadius: 4,
-    minWidth: 32,
+    minWidth: 30,
     alignItems: "center",
   },
+  timerValue: { color: "#FF6B6B", fontSize: 16, fontWeight: "bold" },
+  timerUnit: { color: "#aaa", fontSize: 9, fontWeight: "bold" },
   ended: {
     backgroundColor: "#95A5A6",
     padding: 8,
     borderRadius: 4,
     marginTop: 8,
+    alignItems: "center",
   },
-  btn: { flex: 1, padding: 10, borderRadius: 6, alignItems: "center" },
+
+  btnPrimary: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    borderRadius: 6,
+    marginTop: 12,
+    alignItems: "center",
+  },
+  btnPrimaryText: { color: "#fff", fontWeight: "bold" },
+
   badge: {
     position: "absolute",
     top: 12,
     right: 12,
     backgroundColor: "#FF6B6B",
-    paddingHorizontal: 10,
     paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 4,
   },
+  badgeText: { color: "#fff", fontSize: 10, fontWeight: "bold" },
 });
 
-// --- 5. Product Card Component (New) ---
+/* ============================================================================
+      5. PRODUCT CARD (Native Equivalent of Web version)
+      ============================================================================ */
 const ProductCard = ({
   image,
   brand,
@@ -594,49 +578,47 @@ const ProductCard = ({
   onPress,
   onHeartPress,
   currencySymbol = "₹",
+  imageStyle,
+  style, // <--- ACCEPT STYLE PROP HERE
 }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={onPress}
-      style={prodStyles.card}
+      // Pass the 'style' prop last to allow overrides
+      style={[pcStyles.card, style]}
     >
-      {/* Image Section */}
-      <View style={prodStyles.imageContainer}>
-        <ImageLoader source={{ uri: image }} style={prodStyles.image} />
+      <View style={[pcStyles.imgWrap, imageStyle]}>
+        <ImageLoader source={{ uri: image }} style={pcStyles.image} />
 
-        {/* Discount Badge (Top Left) */}
         {discount && (
-          <View style={prodStyles.badge}>
-            <Text style={prodStyles.badgeText}>{discount}</Text>
+          <View style={pcStyles.discountTag}>
+            <Text style={pcStyles.discountText}>{discount}</Text>
           </View>
         )}
 
-        {/* Heart/Wishlist Button (Top Right) */}
         <TouchableOpacity
-          style={prodStyles.heartBtn}
-          onPress={onHeartPress}
-          activeOpacity={0.7}
+          onPress={(e) => onHeartPress && onHeartPress()}
+          activeOpacity={0.8}
+          style={pcStyles.heartBtn}
         >
-          {/* Simple Heart Icon using Text to avoid external icon libs */}
-          <Text style={prodStyles.heartIcon}>♡</Text>
+          <Text style={pcStyles.heartIcon}>♡</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Details Section */}
-      <View style={prodStyles.details}>
-        {brand && <Text style={prodStyles.brand}>{brand}</Text>}
-        <Text style={prodStyles.title} numberOfLines={1}>
+      <View style={pcStyles.content}>
+        {brand && <Text style={pcStyles.brand}>{brand}</Text>}
+        <Text numberOfLines={1} style={pcStyles.title}>
           {title}
         </Text>
 
-        <View style={prodStyles.priceRow}>
-          <Text style={prodStyles.price}>
+        <View style={pcStyles.priceRow}>
+          <Text style={pcStyles.price}>
             {currencySymbol}
             {price}
           </Text>
           {originalPrice && (
-            <Text style={prodStyles.originalPrice}>
+            <Text style={pcStyles.originalPrice}>
               {currencySymbol}
               {originalPrice}
             </Text>
@@ -647,42 +629,36 @@ const ProductCard = ({
   );
 };
 
-const prodStyles = StyleSheet.create({
+const pcStyles = StyleSheet.create({
   card: {
-    width: width / 2 - 24, // Fits 2 columns nicely
+    // --- CHANGED HERE ---
+    width: "48%", // Use percentage to fit 2 items (leaving 4% gap)
     backgroundColor: "#fff",
-    borderRadius: 8,
-    margin: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
     overflow: "hidden",
-    elevation: 2, // Android Shadow
-    shadowColor: "#000", // iOS Shadow
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    marginBottom: 16, // Vertical spacing
+    // marginHorizontal is REMOVED to prevent wrapping issues
   },
-  imageContainer: {
-    height: 200, // Tall portrait image
+  imgWrap: {
     width: "100%",
-    position: "relative",
+    height: 180, // Reduced slightly for better portrait proportions
+    overflow: "hidden",
   },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  badge: {
+  image: { width: "100%", height: "100%" },
+
+  discountTag: {
     position: "absolute",
-    top: 12,
+    top: 0,
     left: 0,
     backgroundColor: "#FF5252",
-    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderBottomRightRadius: 4,
+    paddingHorizontal: 8,
+    borderBottomRightRadius: 8,
   },
-  badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
+  discountText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+
   heartBtn: {
     position: "absolute",
     top: 8,
@@ -691,98 +667,143 @@ const prodStyles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    elevation: 4,
   },
-  heartIcon: {
-    fontSize: 18,
-    color: "#333",
-    marginTop: 2, // optical adjustment
-  },
-  details: {
-    padding: 10,
-  },
-  brand: {
-    fontSize: 12,
-    color: "#888",
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 4,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#000",
-  },
+  heartIcon: { fontSize: 16, color: "#FF6B6B" },
+
+  content: { padding: 12 },
+  brand: { fontSize: 11, color: "#777", marginBottom: 2 },
+  title: { fontSize: 14, fontWeight: "700", marginBottom: 4 },
+
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  price: { fontSize: 16, fontWeight: "700" },
   originalPrice: {
     fontSize: 12,
-    color: "#aaa",
+    color: "#888",
     textDecorationLine: "line-through",
   },
 });
-// --- 6. Generic Button Component (Reusable) ---
+
+/* ============================================================================
+      6. BUTTON COMPONENT
+      ============================================================================ */
 const ButtonComponent = ({
   text = "Button",
   onPress,
   backgroundColor = "#FF6B6B",
-  textColor = "#FFF",
-  style,
-  textStyle,
-}) => {
-  return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onPress}
-      style={[btnStyles.btn, { backgroundColor }, style]}
-    >
-      <Text style={[btnStyles.text, { color: textColor }, textStyle]}>
-        {text}
-      </Text>
-    </TouchableOpacity>
-  );
-};
+  textColor = "#fff",
+}) => (
+  <TouchableOpacity
+    activeOpacity={0.8}
+    onPress={onPress}
+    style={[btnStyles.btn, { backgroundColor }]}
+  >
+    <Text style={[btnStyles.text, { color: textColor }]}>{text}</Text>
+  </TouchableOpacity>
+);
 
 const btnStyles = StyleSheet.create({
   btn: {
     width: "100%",
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    marginVertical: 10,
+    marginVertical: 8,
   },
-  text: {
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
+  text: { fontSize: 16, fontWeight: "700" },
 });
 
-// EXPORTS
+/* ============================================================================
+      7. GRID CONTAINER (Native Equivalent)
+      ============================================================================ */
+const GridContainer = ({
+  data = [],
+  renderItem,
+  keyExtractor,
+  children,
+  style = {},
+  emptyComponent,
+  numColumns = 2,
+  itemSpacing = 12,
+}) => {
+  if (!data || data.length === 0) {
+    return (
+      <View style={[{ padding: 8 }, style]}>{children || emptyComponent}</View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={data}
+      numColumns={numColumns}
+      keyExtractor={(item, index) =>
+        keyExtractor ? keyExtractor(item) : index.toString()
+      }
+      renderItem={({ item, index }) => (
+        <View style={{ flex: 1 / numColumns, padding: itemSpacing / 2 }}>
+          {renderItem({ item, index })}
+        </View>
+      )}
+      contentContainerStyle={[{ padding: itemSpacing / 2 }, style]}
+    />
+  );
+};
+
+/* ============================================================================
+      8. HEADING (Native Equivalent)
+      ============================================================================ */
+const Heading = ({
+  title,
+  subtitle,
+  align = "left",
+  size = "lg",
+  style = {},
+}) => {
+  const alignMap = {
+    left: "flex-start",
+    center: "center",
+    right: "flex-end",
+  };
+
+  const sizeMap = {
+    sm: 16,
+    md: 18,
+    lg: 20,
+    xl: 24,
+  };
+
+  return (
+    <View style={[{ marginBottom: 16, alignItems: alignMap[align] }, style]}>
+      <Text
+        style={{ fontSize: sizeMap[size], fontWeight: "700", color: "#000" }}
+      >
+        {title}
+      </Text>
+      {subtitle && (
+        <Text style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+          {subtitle}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+/* ============================================================================
+      9. SECTION WRAPPER (Native Equivalent)
+      ============================================================================ */
+const Section = ({ children, padding = 16, marginBottom = 20, style = {} }) => (
+  <View style={[{ padding, marginBottom }, style]}>{children}</View>
+);
+
 export {
   BannerComponent,
   CategoryComponent,
   SaleCard,
   ProductCard,
-  ButtonComponent,
+  ButtonComponent,  
+  GridContainer,
+  Heading,
+  Section,
 };
