@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   StyleSheet,
   Text,
@@ -8,6 +9,7 @@ import {
   Image,
   ScrollView,
   FlatList,
+  StatusBar,
 } from "react-native";
 import Carousel from "pinar";
 import ShimmerPlaceholder from "react-native-shimmer-placeholder";
@@ -16,8 +18,8 @@ import LinearGradient from "react-native-linear-gradient";
 const { width, height } = Dimensions.get("window");
 
 /* ============================================================================
-      1. IMAGE LOADER (Native Equivalent of Web ImageLoader)
-      ============================================================================ */
+   1. IMAGE LOADER (Native Equivalent of Web ImageLoader)
+   ============================================================================ */
 const ImageLoader = ({
   source,
   style,
@@ -51,8 +53,8 @@ const ImageLoader = ({
 };
 
 /* ============================================================================
-      2. BANNER COMPONENT (Native Equivalent)
-      ============================================================================ */
+   2. BANNER COMPONENT (Native Equivalent)
+   ============================================================================ */
 const BannerComponent = ({
   bannerData = [],
   autoplay = true,
@@ -113,8 +115,8 @@ const stylesBanner = StyleSheet.create({
 });
 
 /* ============================================================================
-      3. CATEGORY COMPONENT (Native Equivalent)
-      ============================================================================ */
+      3. CATEGORY COMPONENT (Fixed: 3 Columns, Proper Styling)
+  ============================================================================ */
 const CategoryComponent = ({
   categoriesData = [],
   layout = "horizontal",
@@ -124,8 +126,39 @@ const CategoryComponent = ({
   showCount = false,
   circleSize = 70,
   imageSize = 80,
-  fallbackImage,
 }) => {
+  const renderGrid = (item) => {
+    const screenPadding = 32;
+    const totalGapSize = (numColumns - 1) * 8;
+    const availableWidth = width - screenPadding - totalGapSize;
+    const itemWidth = availableWidth / numColumns;
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={{ width: itemWidth, alignItems: "center", marginBottom: 12 }}
+        onPress={() => onCategoryPress && onCategoryPress(item)}
+      >
+        <View style={catStyles.gridImgWrap}>
+          <ImageLoader
+            style={{ width: "100%", height: "100%" }}
+            source={{ uri: item.image }}
+          />
+        </View>
+
+        {showTitle && (
+          <Text numberOfLines={2} style={catStyles.gridTitle}>
+            {item.name}
+          </Text>
+        )}
+        {showCount && item.count && (
+          <Text style={catStyles.countText}>{item.count} items</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  // 2. Circle Renderer
   const renderCircle = (item) => (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -153,41 +186,10 @@ const CategoryComponent = ({
           {item.name}
         </Text>
       )}
-      {showCount && item.count && (
-        <Text style={catStyles.countText}>{item.count}</Text>
-      )}
     </TouchableOpacity>
   );
 
-  const renderGrid = (item) => {
-    const itemWidth =
-      (width - 48) / numColumns - ((numColumns - 1) * 8) / numColumns;
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={{ width: itemWidth, alignItems: "center", marginBottom: 12 }}
-        onPress={() => onCategoryPress && onCategoryPress(item)}
-      >
-        <View style={catStyles.gridImgWrap}>
-          <ImageLoader
-            style={{ width: "100%", height: "100%" }}
-            source={{ uri: item.image }}
-          />
-        </View>
-
-        {showTitle && (
-          <Text numberOfLines={2} style={catStyles.gridTitle}>
-            {item.name}
-          </Text>
-        )}
-        {showCount && item.count && (
-          <Text style={catStyles.countText}>{item.count} items</Text>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
+  // 3. Vertical Renderer (List view)
   const renderVertical = (item) => (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -227,6 +229,7 @@ const CategoryComponent = ({
     </TouchableOpacity>
   );
 
+  // 4. Horizontal Renderer (Square cards)
   const renderHorizontal = (item) => (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -253,25 +256,8 @@ const CategoryComponent = ({
           {item.name}
         </Text>
       )}
-      {showCount && item.count && (
-        <Text style={catStyles.countText}>{item.count}</Text>
-      )}
     </TouchableOpacity>
   );
-
-  if (layout === "circle") {
-    return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ padding: 12 }}
-      >
-        {categoriesData.map((item, index) => (
-          <View key={index}>{renderCircle(item)}</View>
-        ))}
-      </ScrollView>
-    );
-  }
 
   if (layout === "grid") {
     return (
@@ -279,7 +265,7 @@ const CategoryComponent = ({
         style={{
           flexDirection: "row",
           flexWrap: "wrap",
-          paddingHorizontal: 16,
+          paddingHorizontal: 0,
           gap: 8,
         }}
       >
@@ -292,7 +278,7 @@ const CategoryComponent = ({
 
   if (layout === "vertical") {
     return (
-      <View style={{ padding: 12 }}>
+      <View style={{ padding: 0 }}>
         {categoriesData.map((item, index) => (
           <View key={index}>{renderVertical(item)}</View>
         ))}
@@ -300,20 +286,26 @@ const CategoryComponent = ({
     );
   }
 
+  const isCircle = layout === "circle";
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ padding: 12 }}
+      style={{ marginHorizontal: -8 }}
+      contentContainerStyle={{ paddingHorizontal: 20 }}
     >
       {categoriesData.map((item, index) => (
-        <View key={index}>{renderHorizontal(item)}</View>
+        <View key={index}>
+          {isCircle ? renderCircle(item) : renderHorizontal(item)}
+        </View>
       ))}
     </ScrollView>
   );
 };
 
+// --- STYLES FOR CATEGORY COMPONENT ---
 const catStyles = StyleSheet.create({
+  // Circle Layout Styles
   circleItem: { marginRight: 16, alignItems: "center" },
   circleImgWrap: { overflow: "hidden", backgroundColor: "#ccc" },
   circleTitle: {
@@ -321,39 +313,50 @@ const catStyles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     maxWidth: 80,
+    color: "#333",
   },
-  countText: { fontSize: 10, textAlign: "center", color: "#666" },
 
+  // Grid Layout Styles
   gridImgWrap: {
     width: "100%",
     aspectRatio: 1,
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: "#ccc",
+    backgroundColor: "#b4b6c1ff",
   },
-  gridTitle: { marginTop: 8, fontSize: 12, textAlign: "center" },
+  gridTitle: { marginTop: 8, fontSize: 12, textAlign: "center", color: "#333" },
 
+  // Vertical Layout Styles
   vertItem: {
     flexDirection: "row",
     backgroundColor: "#fff",
     padding: 12,
     marginBottom: 12,
     borderRadius: 12,
-    elevation: 3,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
 
+  // Horizontal Layout Styles
   horizItem: { marginRight: 16, alignItems: "center" },
   horizTitle: {
     marginTop: 8,
     fontSize: 12,
     textAlign: "center",
     maxWidth: 100,
+    color: "#333",
   },
+
+  // Shared
+  countText: { fontSize: 10, textAlign: "center", color: "#666", marginTop: 2 },
 });
 
 /* ============================================================================
-      4. SALE CARD (Native Equivalent)
-      ============================================================================ */
+   4. SALE CARD (Native Equivalent)
+   ============================================================================ */
 const SaleCard = ({
   brand,
   category,
@@ -566,8 +569,8 @@ const saleStyles = StyleSheet.create({
 });
 
 /* ============================================================================
-      5. PRODUCT CARD (Native Equivalent of Web version)
-      ============================================================================ */
+   5. PRODUCT CARD (Native Equivalent of Web version)
+   ============================================================================ */
 const ProductCard = ({
   image,
   brand,
@@ -687,8 +690,8 @@ const pcStyles = StyleSheet.create({
 });
 
 /* ============================================================================
-      6. BUTTON COMPONENT
-      ============================================================================ */
+   6. BUTTON COMPONENT
+   ============================================================================ */
 const ButtonComponent = ({
   text = "Button",
   onPress,
@@ -716,8 +719,8 @@ const btnStyles = StyleSheet.create({
 });
 
 /* ============================================================================
-      7. GRID CONTAINER (Native Equivalent)
-      ============================================================================ */
+   7. GRID CONTAINER (Native Equivalent)
+   ============================================================================ */
 const GridContainer = ({
   data = [],
   renderItem,
@@ -752,8 +755,8 @@ const GridContainer = ({
 };
 
 /* ============================================================================
-      8. HEADING (Native Equivalent)
-      ============================================================================ */
+   8. HEADING (Native Equivalent)
+   ============================================================================ */
 const Heading = ({
   title,
   subtitle,
@@ -791,19 +794,47 @@ const Heading = ({
 };
 
 /* ============================================================================
-      9. SECTION WRAPPER (Native Equivalent)
-      ============================================================================ */
+   9. SECTION WRAPPER (Native Equivalent)
+   ============================================================================ */
 const Section = ({ children, padding = 16, marginBottom = 20, style = {} }) => (
   <View style={[{ padding, marginBottom }, style]}>{children}</View>
 );
+
+/* ============================================================================
+      10. PAGE WRAPPER (Modern & Safe)
+      ============================================================================ */
+const PageWrapper = ({
+  children,
+  backgroundColor = "#F9FAFB",
+  noScroll = false,
+}) => {
+  const Container = noScroll ? View : ScrollView;
+  const scrollProps = noScroll
+    ? { style: { flex: 1 } }
+    : {
+        showsVerticalScrollIndicator: false,
+        contentContainerStyle: { paddingBottom: 40 },
+      };
+
+  return (
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor }}
+      edges={["top", "left", "right"]}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <Container {...scrollProps}>{children}</Container>
+    </SafeAreaView>
+  );
+};
 
 export {
   BannerComponent,
   CategoryComponent,
   SaleCard,
   ProductCard,
-  ButtonComponent,  
+  ButtonComponent,
   GridContainer,
   Heading,
   Section,
+  PageWrapper,
 };
