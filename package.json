@@ -1,6 +1,6 @@
 {
   "name": "react-universal-dynamic-ui",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Universal UI Kit (Banners, Categories, Cards) for React Native and React Web",
   "main": "index.js",
   "react-native": "index.native.js",
