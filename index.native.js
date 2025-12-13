@@ -566,10 +566,6 @@ const ProductList = ({ apiUrl }) => {
   return (
     <Section>
       <Heading title="NEW ARRIVALS" size="sm" />
-      {/* FIX for VirtualizedLists error:
-         We use `scrollEnabled={false}` because this FlatList is already inside the 
-         App's PageWrapper ScrollView.
-      */}
       <FlatList
         data={products}
         numColumns={2}
